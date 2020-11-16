@@ -1,0 +1,79 @@
+import numpy as np
+import math as m
+import random as r
+
+POP_SIZE = 200
+CROSSOVER_RATE = 0.7
+MUTATION_RATE = 0.003
+N_GENERATIONS = 200
+X_BOUND = [-3.0, 12.1]
+Y_BOUND = [4.1, 5.8]
+
+
+def F(X, Y):
+    return 21.5 + X * np.sin(4 * m.pi * X) + Y * np.sin(20 * m.pi * Y)
+
+
+def get_fitness(pop):
+    X, Y = translateDNA(pop)
+    pred = F(X, Y)
+    return pred
+
+
+def translateDNA(pop):
+    X = pop[:, 0]
+    Y = pop[:, 1]
+    return X, Y
+
+
+def crossover_and_mutation(pop, CROSSOVER_RATE):
+    new_pop = []
+    for father in pop:
+        child = father
+        if np.random.rand() < CROSSOVER_RATE:
+            mother = pop[np.random.randint(POP_SIZE)]
+            cross_points = np.random.randint(low=0, high=2)
+            child[cross_points] = mother[cross_points]
+        mutation(child, MUTATION_RATE)
+        new_pop.append(child)
+    return new_pop
+
+
+def mutation(child, MUTATION_RATE):
+    if np.random.rand() < MUTATION_RATE:
+        mutation_point = np.random.randint(0, 2)
+        if mutation_point == 0:
+            child[mutation_point] = r.uniform(X_BOUND[0], X_BOUND[1])
+        else:
+            child[mutation_point] = r.uniform(Y_BOUND[0], Y_BOUND[1])
+
+
+def select(pop, fitness):
+    idx = np.random.choice(np.arange(POP_SIZE), size=POP_SIZE, replace=True, p=fitness / (fitness.sum()))
+    return pop[idx]
+
+
+def print_info(pop):
+    fitness = get_fitness(pop)
+    max_fitness_index = np.argmax(fitness)
+    X, Y = translateDNA(pop)
+    print("最优基因型：", pop[max_fitness_index])
+    print("(X, Y):", (X[max_fitness_index], Y[max_fitness_index]))
+
+
+if __name__ == "__main__":
+    global sca
+    father_pop = []
+    for i in range(POP_SIZE):
+        father_pop.append(r.uniform(X_BOUND[0], X_BOUND[1]))
+        father_pop.append(r.uniform(Y_BOUND[0], Y_BOUND[1]))
+    mother_pop = np.array(father_pop)
+    pop = mother_pop.reshape(POP_SIZE, 2)
+    for _ in range(N_GENERATIONS):
+        X, Y = translateDNA(pop)
+        if 'sca' in locals():
+            sca.remove()
+        pop = np.array(crossover_and_mutation(pop, CROSSOVER_RATE))
+        fitness = get_fitness(pop)
+        pop = select(pop, fitness)
+    print_info(pop)
